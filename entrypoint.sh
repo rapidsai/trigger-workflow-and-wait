@@ -107,7 +107,7 @@ api() {
     echo >&2 "api failed:"
     echo >&2 "path: $path"
     echo >&2 "response: $response"
-    if [[ "$response" == *'"Server Error"'* ]]; then 
+    if [[ "$response" == *'"Server Error"'* ]]; then
       echo "Server error - trying again"
     else
       exit 1
@@ -124,8 +124,9 @@ lets_wait() {
 # Return the ids of the most recent workflow runs, optionally filtered by user
 get_workflow_runs() {
   since=${1:?}
+  ref=${2:?}
 
-  query="event=workflow_dispatch&created=>=$since${INPUT_GITHUB_USER+&actor=}${INPUT_GITHUB_USER}&per_page=100"
+  query="event=workflow_dispatch&created=>=$since&branch=${ref}${INPUT_GITHUB_USER+&actor=}${INPUT_GITHUB_USER}&per_page=100"
 
   echo "Getting workflow runs using query: ${query}" >&2
 
@@ -138,7 +139,7 @@ trigger_workflow() {
   START_TIME=$(date +%s)
   SINCE=$(date -u -Iseconds -d "@$((START_TIME - 120))") # Two minutes ago, to overcome clock skew
 
-  OLD_RUNS=$(get_workflow_runs "$SINCE")
+  OLD_RUNS=$(get_workflow_runs "$SINCE" "$ref")
 
   echo >&2 "Triggering workflow:"
   echo >&2 "  workflows/${INPUT_WORKFLOW_FILE_NAME}/dispatches"
@@ -151,7 +152,7 @@ trigger_workflow() {
   while [ "$NEW_RUNS" = "$OLD_RUNS" ]
   do
     lets_wait
-    NEW_RUNS=$(get_workflow_runs "$SINCE")
+    NEW_RUNS=$(get_workflow_runs "$SINCE" "$ref")
   done
 
   # Return new run ids
