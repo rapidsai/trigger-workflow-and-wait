@@ -39,6 +39,12 @@ validate_args() {
     wait_workflow=${INPUT_WAIT_WORKFLOW}
   fi
 
+  summarize=false
+  if [ -n "${INPUT_SUMMARIZE}" ]
+  then
+    summarize=${INPUT_SUMMARIZE}
+  fi
+
   if [ -z "${INPUT_OWNER}" ]
   then
     echo "Error: Owner is a required argument."
@@ -181,6 +187,15 @@ wait_for_workflow_to_finish() {
     comment_downstream_link ${last_workflow_url}
   fi
 
+  if [ "${summarize}" = true ]
+  then
+    echo "| | |" >> $GITHUB_STEP_SUMMARY
+    echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+    echo "| Workflow URL | <${last_workflow_url}> |" >> $GITHUB_STEP_SUMMARY
+    echo "| Workflow ID | ${last_workflow_id} |" >> $GITHUB_STEP_SUMMARY
+    echo "| | |" >> $GITHUB_STEP_SUMMARY
+  fi
+
   conclusion=null
   status=
 
@@ -194,6 +209,7 @@ wait_for_workflow_to_finish() {
 
     echo "Checking conclusion [${conclusion}]"
     echo "Checking status [${status}]"
+    echo "Workflow logs: ${last_workflow_url}"
     echo "conclusion=${conclusion}" >> $GITHUB_OUTPUT
   done
 
